@@ -1,0 +1,599 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>小米手环 健康数据</title>
+<style>
+  :root {
+    --bg: #F5F5F7;
+    --card: #FFFFFF;
+    --ink: #1D1D1F;
+    --ink2: #6E6E73;
+    --line: #E5E5EA;
+    --blue: #007AFF;
+    --green: #34C759;
+    --orange: #FF9500;
+    --red: #FF3B30;
+    --purple: #AF52DE;
+    --cyan: #32ADE6;
+    --pink: #FF2D55;
+    --radius: 20px;
+    --shadow: 0 2px 12px rgba(0,0,0,.06), 0 1px 3px rgba(0,0,0,.04);
+    --shadow-up: 0 8px 28px rgba(0,0,0,.10), 0 2px 8px rgba(0,0,0,.06);
+  }
+  * { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+  html,body { height:100%; }
+  body {
+    font-family:-apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "PingFang SC", "Helvetica Neue", "Microsoft YaHei", sans-serif;
+    background:var(--bg); color:var(--ink);
+    -webkit-font-smoothing:antialiased; font-size:15px; line-height:1.5;
+  }
+  ::selection { background:rgba(0,122,255,.16); }
+
+  /* ===== 登录屏 ===== */
+  #loginView {
+    position:fixed; inset:0; display:flex; align-items:center; justify-content:center;
+    background:
+      radial-gradient(1200px 600px at 50% -10%, rgba(0,122,255,.10), transparent 60%),
+      radial-gradient(900px 500px at 80% 110%, rgba(175,82,222,.08), transparent 55%),
+      var(--bg);
+    padding:24px; z-index:10;
+  }
+  .loginCard {
+    width:100%; max-width:420px; background:var(--card);
+    border-radius:28px; padding:40px 36px 32px;
+    box-shadow:var(--shadow-up); animation:rise .5s cubic-bezier(.2,.8,.2,1);
+  }
+  @keyframes rise { from { opacity:0; transform:translateY(14px) } to { opacity:1; transform:none } }
+  .loginBadge {
+    width:56px; height:56px; border-radius:15px; margin:0 auto 18px;
+    background:linear-gradient(135deg,#007AFF,#32ADE6 60%,#5AC8FA);
+    display:flex; align-items:center; justify-content:center;
+    box-shadow:0 6px 18px rgba(0,122,255,.35);
+  }
+  .loginBadge svg { width:30px; height:30px; fill:#fff; }
+  .loginTitle { text-align:center; font-size:24px; font-weight:700; letter-spacing:-.02em; }
+  .loginSub { text-align:center; color:var(--ink2); font-size:13px; margin-top:4px; }
+  .field { margin-top:22px; }
+  .field label { display:block; font-size:13px; font-weight:600; color:var(--ink2); margin-bottom:7px; padding-left:2px; }
+  .field input {
+    width:100%; height:46px; border:none; border-radius:12px; outline:none;
+    background:#F2F2F7; padding:0 16px; font-size:16px; color:var(--ink);
+    transition:box-shadow .18s, background .18s;
+  }
+  .field input:focus { background:#fff; box-shadow:0 0 0 3px rgba(0,122,255,.28); }
+  .loginBtn {
+    width:100%; height:48px; margin-top:26px; border:none; border-radius:13px;
+    background:linear-gradient(135deg,#007AFF,#0A84FF); color:#fff; font-size:16px; font-weight:600;
+    cursor:pointer; transition:transform .12s, box-shadow .18s, opacity .18s;
+    box-shadow:0 4px 14px rgba(0,122,255,.35);
+  }
+  .loginBtn:hover { box-shadow:0 6px 20px rgba(0,122,255,.45); transform:translateY(-1px); }
+  .loginBtn:active { transform:scale(.985); }
+  .loginBtn:disabled { opacity:.55; cursor:default; transform:none; }
+  .loginErr {
+    margin-top:16px; padding:10px 14px; border-radius:10px; background:rgba(255,59,48,.10);
+    color:var(--red); font-size:13px; display:none;
+  }
+  .loginNote { margin-top:20px; text-align:center; color:#AEAEB2; font-size:12px; }
+  .loginNote b { color:var(--ink2); font-weight:600; }
+
+  /* ===== 应用主屏 ===== */
+  #appView { display:none; min-height:100vh; }
+  #appView.show { display:block; }
+  .topbar {
+    position:sticky; top:0; z-index:5;
+    background:rgba(245,245,247,.82); backdrop-filter:saturate(180%) blur(18px);
+    -webkit-backdrop-filter:saturate(180%) blur(18px);
+    border-bottom:1px solid rgba(0,0,0,.05);
+  }
+  .topbarInner { max-width:1080px; margin:0 auto; padding:14px 22px; display:flex; align-items:center; justify-content:space-between; gap:14px; }
+  .brand { display:flex; align-items:center; gap:10px; min-width:0; }
+  .brandDot {
+    width:34px; height:34px; border-radius:9px; flex:none;
+    background:linear-gradient(135deg,#007AFF,#32ADE6 60%,#5AC8FA);
+    box-shadow:0 4px 10px rgba(0,122,255,.3);
+  }
+  .brandName { font-size:17px; font-weight:700; letter-spacing:-.01em; white-space:nowrap; }
+  .brandDev { font-size:12px; color:var(--ink2); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:280px; }
+  .topRight { display:flex; align-items:center; gap:12px; flex:none; }
+  .who { font-size:13px; color:var(--ink2); }
+  .btnGhost {
+    height:32px; padding:0 16px; border:1px solid var(--line); border-radius:9px;
+    background:#fff; color:var(--ink); font-size:13px; font-weight:500; cursor:pointer;
+    transition:background .15s;
+  }
+  .btnGhost:hover { background:#F2F2F7; }
+
+  .main { max-width:1080px; margin:0 auto; padding:22px 22px 60px; }
+
+  /* 分段控件（iOS 风格） */
+  .seg {
+    display:inline-flex; padding:3px; border-radius:11px; background:rgba(120,120,128,.14);
+    margin-bottom:20px; gap:2px; flex-wrap:wrap;
+  }
+  .seg button {
+    border:none; background:transparent; padding:7px 16px; border-radius:8px;
+    font-size:13px; font-weight:500; color:var(--ink2); cursor:pointer; transition:all .16s;
+  }
+  .seg button.on { background:#fff; color:var(--ink); font-weight:600; box-shadow:0 1px 4px rgba(0,0,0,.10); }
+
+  /* 大数字卡片 */
+  .cardGrid { display:grid; grid-template-columns:repeat(4,1fr); gap:14px; }
+  .statCard {
+    background:var(--card); border-radius:var(--radius); padding:20px 18px;
+    box-shadow:var(--shadow); transition:transform .18s, box-shadow .18s;
+  }
+  .statCard:hover { transform:translateY(-2px); box-shadow:var(--shadow-up); }
+  .statLabel { font-size:13px; color:var(--ink2); font-weight:500; display:flex; align-items:center; gap:6px; }
+  .statDot { width:8px; height:8px; border-radius:50%; flex:none; }
+  .statValue {
+    font-size:34px; font-weight:700; letter-spacing:-.02em; margin-top:10px;
+    font-variant-numeric:tabular-nums;
+  }
+  .statUnit { font-size:14px; font-weight:400; color:var(--ink2); margin-left:2px; }
+  .statSub { font-size:12px; color:var(--ink2); margin-top:3px; }
+  .cardGrid.second { grid-template-columns:repeat(4,1fr); margin-top:14px; }
+  .cardGrid.second .statValue { font-size:26px; }
+
+  .panel {
+    background:var(--card); border-radius:var(--radius); box-shadow:var(--shadow);
+    padding:22px; margin-top:20px;
+  }
+  .panelTitle { font-size:16px; font-weight:700; letter-spacing:-.01em; }
+  .panelDesc { font-size:12px; color:var(--ink2); margin-top:2px; }
+  .chart { width:100%; height:360px; margin-top:14px; }
+  .chart.small { height:240px; }
+
+  .loading {
+    display:flex; align-items:center; justify-content:center; padding:46px 0; color:var(--ink2); font-size:13px;
+  }
+  .spin {
+    width:18px; height:18px; border-radius:50%; margin-right:10px;
+    border:2px solid rgba(120,120,128,.25); border-top-color:#007AFF;
+    animation:rot .7s linear infinite;
+  }
+  @keyframes rot { to { transform:rotate(360deg) } }
+
+  /* 运动卡片 */
+  .workoutCard {
+    display:flex; align-items:center; gap:16px; padding:16px; border-radius:16px;
+    background:#F7F7F9; margin-top:12px;
+  }
+  .workoutIcon { width:40px; height:40px; border-radius:11px; flex:none; display:flex; align-items:center; justify-content:center; }
+  .workoutIcon svg { width:22px; height:22px; fill:#fff; }
+  .workoutMeta { flex:1; min-width:0; }
+  .workoutName { font-size:15px; font-weight:600; }
+  .workoutSub { font-size:12px; color:var(--ink2); }
+  .workoutNums { text-align:right; flex:none; font-size:13px; color:var(--ink2); }
+  .workoutNums b { display:block; font-size:16px; color:var(--ink); font-weight:700; font-variant-numeric:tabular-nums; }
+  .none { color:#AEAEB2; font-size:13px; padding:14px 2px; }
+
+  /* 导出屏 */
+  .exportRow { display:flex; align-items:center; gap:10px; margin-top:14px; flex-wrap:wrap; }
+  .exportRow .seg { margin-bottom:0; }
+  .chip {
+    display:inline-flex; align-items:center; gap:8px; padding:9px 14px; border-radius:10px;
+    background:#F2F2F7; cursor:pointer; font-size:13px; font-weight:500; user-select:none;
+    border:1px solid transparent; transition:all .15s;
+  }
+  .chip.on { background:#fff; border-color:var(--blue); color:var(--blue); box-shadow:0 0 0 3px rgba(0,122,255,.12); }
+  .exportBtn {
+    height:44px; padding:0 26px; border:none; border-radius:12px; margin-top:24px;
+    background:linear-gradient(135deg,#007AFF,#0A84FF); color:#fff; font-size:15px; font-weight:600;
+    cursor:pointer; box-shadow:0 4px 14px rgba(0,122,255,.3); transition:transform .12s, opacity .15s;
+  }
+  .exportBtn:hover { transform:translateY(-1px); }
+  .exportBtn:disabled { opacity:.55; cursor:default; transform:none; }
+  .exportHint { font-size:12px; color:var(--ink2); margin-top:12px; }
+
+  .foot { text-align:center; color:#AEAEB2; font-size:12px; padding:28px 0 8px; }
+
+  @media (max-width: 860px) {
+    .cardGrid, .cardGrid.second { grid-template-columns:repeat(2,1fr); }
+    .brandDev { max-width:150px; }
+  }
+  @media (max-width: 520px) {
+    .cardGrid, .cardGrid.second { grid-template-columns:1fr 1fr; gap:10px; }
+    .statValue { font-size:26px; }
+    .topbarInner { padding:12px 14px; }
+    .main { padding:16px 14px 46px; }
+    .who { display:none; }
+    .chart { height:300px; }
+    .loginCard { padding:32px 24px 26px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ===================== 登录屏 ===================== -->
+<div id="loginView">
+  <div class="loginCard">
+    <div class="loginBadge">
+      <svg viewBox="0 0 24 24"><path d="M7 3h10v18l-5-3.5L7 21V3z"/></svg>
+    </div>
+    <div class="loginTitle">小米手环健康数据</div>
+    <div class="loginSub">登录小米账号，读取手环云端健康数据</div>
+    <div class="field">
+      <label>小米账号（手机号）</label>
+      <input id="inUser" type="text" autocomplete="username" placeholder="请输入手机号" spellcheck="false">
+    </div>
+    <div class="field">
+      <label>密码</label>
+      <input id="inPass" type="password" autocomplete="current-password" placeholder="请输入密码">
+    </div>
+    <button id="btnLogin" class="loginBtn">登录并获取数据</button>
+    <div id="loginErr" class="loginErr"></div>
+    <div class="loginNote">数据由本机服务直连小米服务器获取，<b>密码仅存于内存</b>，不写入任何文件</div>
+  </div>
+</div>
+
+<!-- ===================== 应用主屏 ===================== -->
+<div id="appView">
+  <div class="topbar">
+    <div class="topbarInner">
+      <div class="brand">
+        <div class="brandDot"></div>
+        <div>
+          <div class="brandName">小米手环健康数据</div>
+          <div class="brandDev" id="devInfo">正在获取设备信息…</div>
+        </div>
+      </div>
+      <div class="topRight">
+        <span class="who" id="whoAmI"></span>
+        <button class="btnGhost" id="btnLogout">退出</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="main">
+    <!-- 分段导航 -->
+    <div class="seg" id="navSeg">
+      <button class="on" data-tab="overview">总览</button>
+      <button data-tab="trend">趋势</button>
+      <button data-tab="detail">明细</button>
+      <button data-tab="export">导出</button>
+    </div>
+
+    <!-- ===== 总览屏 ===== -->
+    <section id="tab-overview">
+      <div class="cardGrid" id="cardsMain"><div class="loading"><div class="spin"></div>正在加载数据…</div></div>
+      <div class="cardGrid second" id="cardsSub"></div>
+      <div class="panel" id="panelWorkout" style="display:none">
+        <div class="panelTitle">运动记录</div>
+        <div class="panelDesc">最近的运动数据</div>
+        <div id="workoutList"></div>
+      </div>
+    </section>
+
+    <!-- ===== 趋势屏 ===== -->
+    <section id="tab-trend" style="display:none">
+      <div class="seg" id="trendSeg">
+        <button class="on" data-k="steps">步数</button>
+        <button data-k="sleep">睡眠</button>
+        <button data-k="calories">卡路里</button>
+        <button data-k="hr">心率</button>
+        <button data-k="spo2">血氧</button>
+      </div>
+      <div class="panel">
+        <div class="panelTitle" id="trendTitle">每日步数</div>
+        <div class="panelDesc" id="trendDesc"></div>
+        <div id="trendChart" class="chart"></div>
+      </div>
+      <div class="panel">
+        <div class="panelTitle">每日睡眠构成</div>
+        <div class="panelDesc">深睡 / 浅睡 / 清醒时长（分钟）</div>
+        <div id="sleepChart" class="chart small"></div>
+      </div>
+    </section>
+
+    <!-- ===== 明细屏 ===== -->
+    <section id="tab-detail" style="display:none">
+      <div class="seg" id="detailSeg">
+        <button class="on" data-k="all">同屏对比</button>
+        <button data-k="heart_rate">心率</button>
+        <button data-k="spo2">血氧</button>
+        <button data-k="stress">压力</button>
+      </div>
+      <div class="panel">
+        <div class="panelTitle" id="detailTitle">近 3 天逐点数据</div>
+        <div class="panelDesc" id="detailDesc"></div>
+        <div id="detailChart" class="chart"></div>
+      </div>
+    </section>
+
+    <!-- ===== 导出屏 ===== -->
+    <section id="tab-export" style="display:none">
+      <div class="panel">
+        <div class="panelTitle">自定义导出</div>
+        <div class="panelDesc">选择数据范围与内容，下载 CSV 或 JSON 文件</div>
+        <div class="exportRow"><span style="font-size:13px;color:var(--ink2);width:64px">时间范围</span>
+          <div class="seg" id="expDays">
+            <button class="on" data-d="7">近 7 天</button>
+            <button data-d="30">近 30 天</button>
+            <button data-d="90">近 90 天</button>
+          </div>
+        </div>
+        <div class="exportRow"><span style="font-size:13px;color:var(--ink2);width:64px">数据内容</span>
+          <div id="expMetrics" style="display:flex;gap:8px;flex-wrap:wrap">
+            <span class="chip on" data-m="daily">每日汇总</span>
+            <span class="chip on" data-m="points">心率/血氧/压力点</span>
+            <span class="chip on" data-m="workouts">运动记录</span>
+          </div>
+        </div>
+        <div class="exportRow"><span style="font-size:13px;color:var(--ink2);width:64px">格式</span>
+          <div class="seg" id="expFmt">
+            <button class="on" data-f="csv">CSV</button>
+            <button data-f="json">JSON</button>
+          </div>
+        </div>
+        <button id="btnExport" class="exportBtn">导出下载</button>
+        <div class="exportHint" id="exportHint"></div>
+      </div>
+    </section>
+
+    <div class="foot" id="footNote">小米手环健康客户端 · 本地服务 · 数据不经过第三方</div>
+  </div>
+</div>
+
+<script src="echarts.min.js" onerror="document.write(&quot;<script src=&quot;https://cdn.jsdelivr.net/npm/echarts@5.5.1/dist/echarts.min.js&quot;></script>&quot;)"></script>
+<script>
+/* ===== 状态 ===== */
+const $ = id => document.getElementById(id);
+let DAILY = [], SUMMARY = {}, POINTS = {}, WORKOUTS = [];
+
+/* ===== 工具 ===== */
+function fmtDate(unix){ const d=new Date(unix*1000); return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); }
+function fmtNum(n){ if(n==null) return '—'; return Number(n).toLocaleString('zh-CN'); }
+async function api(path, opts){
+  const r = await fetch(path, opts||{});
+  if(r.status===401){
+    // 会话失效（退出或令牌过期）：回到登录屏
+    sessionStorage.removeItem('mi_user');
+    location.reload();
+    throw new Error('登录已失效，请重新登录');
+  }
+  const j = await r.json();
+  if(!j.ok) throw new Error(j.error||'请求失败');
+  return j.data;
+}
+function toastErr(e){ console.error(e); const el=$('loginErr'); if(el && !el.style.display){ el.style.display='block'; el.textContent='登录失败：'+e.message; } }
+
+/* ===== 登录 ===== */
+$('btnLogin').addEventListener('click', doLogin);
+document.querySelectorAll('#loginView input').forEach(i=>i.addEventListener('keydown',e=>{ if(e.key==='Enter') doLogin(); }));
+async function doLogin(){
+  const user=$('inUser').value.trim(), pass=$('inPass').value;
+  if(!user||!pass){ const el=$('loginErr'); el.style.display='block'; el.textContent='请输入账号和密码'; return; }
+  const btn=$('btnLogin'); btn.disabled=true; btn.textContent='正在登录并获取数据…';
+  const el=$('loginErr'); el.style.display='none';
+  try{
+    await api('/api/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({username:user,password:pass})});
+    await enterApp();
+  }catch(e){
+    el.style.display='block'; el.textContent='登录失败：'+(e.message||'未知错误');
+  }finally{ btn.disabled=false; btn.textContent='登录并获取数据'; }
+}
+
+/* ===== 进入应用 ===== */
+async function enterApp(){
+  $('loginView').style.display='none';
+  const v=$('appView'); v.classList.add('show');
+  $('whoAmI').textContent = sessionStorage.getItem('mi_user')||'';
+  try{
+    const st=await api('/api/status');
+    if(st.logged_in){ sessionStorage.setItem('mi_user',st.user||''); $('whoAmI').textContent=st.user||''; }
+    if(st.device){
+      $('devInfo').textContent = (st.device.name||'')+' · 固件 '+ (st.device.fw||'—');
+    }
+  }catch(e){}
+  await loadOverview();
+  await loadDetail();
+}
+
+$('btnLogout').addEventListener('click', async ()=>{
+  try{ await api('/api/logout',{method:'POST'}); }catch(e){}
+  sessionStorage.removeItem('mi_user');
+  location.reload();
+});
+
+/* ===== Tab 导航 ===== */
+$('navSeg').addEventListener('click', e=>{
+  const b=e.target.closest('button'); if(!b) return;
+  document.querySelectorAll('#navSeg button').forEach(x=>x.classList.remove('on')); b.classList.add('on');
+  const t=b.dataset.tab;
+  ['overview','trend','detail','export'].forEach(k=>{ $('tab-'+k).style.display = (k===t)?'':'none'; });
+  if(t==='trend') renderTrend();
+  if(t==='detail') renderDetail();
+});
+
+/* ===== 总览 ===== */
+async function loadOverview(){
+  $('cardsMain').innerHTML='<div class="loading"><div class="spin"></div>正在加载数据…</div>';
+  try{
+    const d=await api('/api/overview?days=30');
+    DAILY=d.rows||[]; SUMMARY=d.summary||{}; WORKOUTS=d.workouts||[];
+    renderOverview(); renderTrend(); renderWorkouts();
+  }catch(e){ $('cardsMain').innerHTML='<div class="none">加载失败：'+e.message+'</div>'; }
+}
+function statCard(label,val,unit,sub,color){
+  return '<div class="statCard"><div class="statLabel"><span class="statDot" style="background:'+color+'"></span>'+label+'</div>'+
+    '<div class="statValue">'+val+'<span class="statUnit">'+unit+'</span></div><div class="statSub">'+sub+'</div></div>';
+}
+function renderOverview(){
+  const s=SUMMARY;
+  const main=[
+    statCard('总步数',fmtNum(s.total_steps),'步',s.days_with_steps+' 天有记录','#007AFF'),
+    statCard('平均睡眠评分',s.avg_sleep_score!=null?s.avg_sleep_score:'—','分','来自每日睡眠数据','#34C759'),
+    statCard('最近静息心率',s.latest_rhr!=null?s.latest_rhr:'—','bpm','夜间静息均值','#FF3B30'),
+    statCard('平均血氧',s.latest_spo2!=null?s.latest_spo2+'%':'—','', '最近一天均值','#32ADE6'),
+  ];
+  const sub=[
+    statCard('总卡路里',fmtNum(s.total_calories),'千卡','30 天合计','#FF9500'),
+    statCard('总距离',s.total_distance_m!=null?fmtNum(Math.round(s.total_distance_m/1000*10)/10):'—','公里','步数累计','#007AFF'),
+    statCard('运动次数',s.workout_count!=null?s.workout_count:'—','次','含骑行等记录','#AF52DE'),
+    statCard('数据天数',DAILY.length,'天','有记录的日期数','#8E8E93'),
+  ];
+  $('cardsMain').innerHTML=main.join('');
+  $('cardsSub').innerHTML=sub.join('');
+}
+function renderWorkouts(){
+  const p=$('panelWorkout');
+  if(!WORKOUTS.length){ p.style.display='none'; return; }
+  p.style.display='';
+  const names={outdoor_riding:'户外骑行',outdoor_running:'户外跑步',indoor_running:'室内跑步',walking:'步行',cycling:'骑行'};
+  $('workoutList').innerHTML=WORKOUTS.slice(0,5).map(w=>{
+    const v=JSON.parse(w.value||'{}');
+    const nm=names[w.key]||w.key||'运动';
+    const dur=v.duration?Math.round(v.duration/60):null;
+    const dist=v.distance?Math.round(v.distance/1000*10)/10:null;
+    return '<div class="workoutCard"><div class="workoutIcon" style="background:linear-gradient(135deg,#AF52DE,#FF2D55)">'+
+      '<svg viewBox="0 0 24 24"><path d="M3 12h4l2-7 5 14 2-7h5"/></svg></div>'+
+      '<div class="workoutMeta"><div class="workoutName">'+nm+'</div><div class="workoutSub">'+fmtDate(w.time)+'</div></div>'+
+      '<div class="workoutNums"><b>'+(dist!=null?dist+' km':'—')+'</b>'+(dur!=null?dur+' 分钟':'')+'</div></div>';
+  }).join('');
+}
+
+/* ===== 趋势 ===== */
+let trendChart=null, sleepChart=null;
+$('trendSeg').addEventListener('click', e=>{
+  const b=e.target.closest('button'); if(!b) return;
+  document.querySelectorAll('#trendSeg button').forEach(x=>x.classList.remove('on')); b.classList.add('on');
+  renderTrend(b.dataset.k);
+});
+const SERIES_COLOR={blue:'#007AFF',green:'#34C759',orange:'#FF9500',red:'#FF3B30',cyan:'#32ADE6',purple:'#AF52DE'};
+function baseGrid(){ return {left:8,right:12,top:30,bottom:8,containLabel:true}; }
+function mkChart(el,opt){
+  const c=echarts.getInstanceByDom(el)||echarts.init(el);
+  c.setOption(opt,true); return c;
+}
+function dateAxis(data){ return {type:'category',data:data.map(r=>r.date),boundaryGap:false,
+  axisLine:{lineStyle:{color:'#E5E5EA'}},axisTick:{show:false},axisLabel:{color:'#8E8E93',fontSize:11,
+    formatter:(v)=>String(v).slice(5),hideOverlap:true}}; }
+function valAxis(name,color){
+  return {type:'value',name:name,nameTextStyle:{color:'#8E8E93',fontSize:11},splitLine:{lineStyle:{color:'#F0F0F2'}},
+    axisLabel:{color:'#8E8E93',fontSize:11},nameGap:12};
+}
+function tooltip(){ return {trigger:'axis',backgroundColor:'rgba(255,255,255,.96)',borderColor:'#E5E5EA',
+  borderWidth:1,padding:[10,14],textStyle:{color:'#1D1D1F',fontSize:13},extraCssText:'border-radius:12px;box-shadow:0 8px 24px rgba(0,0,0,.12)'}; }
+function renderTrend(k){
+  k=k||document.querySelector('#trendSeg button.on').dataset.k;
+  if(!DAILY.length) return;
+  const dates=DAILY.map(r=>r.date);
+  const titles={steps:['每日步数','蓝色为每日步数，右侧橙线为活动消耗卡路里'],
+    sleep:['每日睡眠时长','柱为总时长，绿/浅绿/灰分别为深睡/浅睡/清醒（分钟）'],
+    calories:['每日卡路里','总消耗与活动消耗对比（千卡）'],
+    hr:['每日心率','红色为日均心率，深红为静息心率（bpm）'],
+    spo2:['每日血氧','平均值 / 最大值 / 最小值（%）']};
+  $('trendTitle').textContent=titles[k][0]; $('trendDesc').textContent=titles[k][1];
+  let opt={color:[SERIES_COLOR.blue,SERIES_COLOR.orange,SERIES_COLOR.green,SERIES_COLOR.red,SERIES_COLOR.cyan],tooltip:tooltip(),grid:baseGrid()};
+  const mk=(name,key,color)=>({type:'bar',name:name,data:DAILY.map(r=>r[key]),itemStyle:{color:color,borderRadius:[5,5,0,0]}});
+  const mkL=(name,key,color,area)=>({type:'line',name:name,smooth:true,symbol:'circle',symbolSize:5,data:DAILY.map(r=>r[key]),
+    lineStyle:{width:2,color:color},itemStyle:{color:color},...(area?{areaStyle:{opacity:.10}}:{})});
+  if(k==='steps'){
+    opt.legend={top:0,right:0,textStyle:{color:'#8E8E93',fontSize:12},icon:'circle'};
+    opt.xAxis=dateAxis(DAILY); opt.yAxis=[valAxis('步数','#007AFF')];
+    opt.series=[mk('步数','steps',SERIES_COLOR.blue),mkL('活动卡路里','calories_activity',SERIES_COLOR.orange)];
+  }else if(k==='sleep'){
+    opt.legend={top:0,right:0,textStyle:{color:'#8E8E93',fontSize:12},icon:'circle'};
+    opt.xAxis=dateAxis(DAILY); opt.yAxis=[valAxis('分钟','#34C759')];
+    opt.series=[mk('深睡','sleep_deep',SERIES_COLOR.green),mk('浅睡','sleep_light','#AEE6C8'),mk('清醒','sleep_awake','#D1D1D6'),
+      mkL('睡眠评分','sleep_score','#AF52DE')];
+  }else if(k==='calories'){
+    opt.legend={top:0,right:0,textStyle:{color:'#8E8E93',fontSize:12},icon:'circle'};
+    opt.xAxis=dateAxis(DAILY); opt.yAxis=[valAxis('千卡','#FF9500')];
+    opt.series=[mk('总消耗','calories_total',SERIES_COLOR.orange),mkL('活动消耗','calories_activity',SERIES_COLOR.blue)];
+  }else if(k==='hr'){
+    opt.legend={top:0,right:0,textStyle:{color:'#8E8E93',fontSize:12},icon:'circle'};
+    opt.xAxis=dateAxis(DAILY); opt.yAxis=[valAxis('bpm','#FF3B30',{min:40})];
+    opt.series=[mkL('日均心率','avg_hr',SERIES_COLOR.red),mkL('静息心率','avg_rhr','#FF6B5E')];
+  }else if(k==='spo2'){
+    opt.legend={top:0,right:0,textStyle:{color:'#8E8E93',fontSize:12},icon:'circle'};
+    opt.xAxis=dateAxis(DAILY); opt.yAxis=[valAxis('%','#32ADE6')];
+    opt.series=[mkL('平均血氧','avg_spo2',SERIES_COLOR.cyan,true),mkL('最大血氧','max_spo2','#7DD8F5'),mkL('最小血氧','min_spo2','#AEE6C8')];
+  }
+  trendChart=mkChart($('trendChart'),opt);
+  renderSleepChart(dates);
+}
+function renderSleepChart(dates){
+  sleepChart=mkChart($('sleepChart'),{color:[SERIES_COLOR.green,'#AEE6C8','#D1D1D6'],tooltip:tooltip(),legend:{top:0,right:0,textStyle:{color:'#8E8E93',fontSize:12},icon:'circle'},
+    grid:baseGrid(),xAxis:dateAxis(DAILY),
+    yAxis:[valAxis('分钟','#34C759')],
+    series:[{type:'bar',name:'深睡',stack:'s',data:DAILY.map(r=>r.sleep_deep),itemStyle:{color:SERIES_COLOR.green}},
+      {type:'bar',name:'浅睡',stack:'s',data:DAILY.map(r=>r.sleep_light),itemStyle:{color:'#AEE6C8'}},
+      {type:'bar',name:'清醒',stack:'s',data:DAILY.map(r=>r.sleep_awake),itemStyle:{color:'#D1D1D6'}}]});
+}
+
+/* ===== 明细 ===== */
+let detailChart=null;
+$('detailSeg').addEventListener('click', e=>{
+  const b=e.target.closest('button'); if(!b) return;
+  document.querySelectorAll('#detailSeg button').forEach(x=>x.classList.remove('on')); b.classList.add('on');
+  renderDetail(b.dataset.k);
+});
+async function loadDetail(){
+  try{ const d=await api('/api/points?days=3'); POINTS=d.points||{}; renderDetail(); }catch(e){}
+}
+function ptsArr(key){ return (POINTS[key]||[]).map(p=>{ const v=JSON.parse(p.value||'{}');
+  return [p.time*1000, v.bpm!=null?v.bpm:(v.spo2!=null?v.spo2:v.stress)]; }); }
+function renderDetail(k){
+  k=k||document.querySelector('#detailSeg button.on').dataset.k;
+  const names={heart_rate:'心率',spo2:'血氧',stress:'压力',all:'心率 / 血氧 / 压力'};
+  $('detailTitle').textContent='近 3 天逐点数据 · '+names[k];
+  const n={heart_rate:POINTS.heart_rate?POINTS.heart_rate.length:0,
+    spo2:POINTS.spo2?POINTS.spo2.length:0,stress:POINTS.stress?POINTS.stress.length:0};
+  $('detailDesc').textContent='心率 '+n.heart_rate+' 点 · 血氧 '+n.spo2+' 点 · 压力 '+n.stress+' 点';
+  const series=[];
+  if(k==='all'){
+    series.push({name:'心率',type:'line',smooth:true,symbol:'none',data:ptsArr('heart_rate'),lineStyle:{width:2,color:SERIES_COLOR.red},itemStyle:{color:SERIES_COLOR.red}},
+      {name:'血氧',type:'line',smooth:true,symbol:'none',data:ptsArr('spo2'),lineStyle:{width:2,color:SERIES_COLOR.cyan},itemStyle:{color:SERIES_COLOR.cyan},yAxisIndex:1},
+      {name:'压力',type:'line',smooth:true,symbol:'none',data:ptsArr('stress'),lineStyle:{width:2,color:SERIES_COLOR.purple},itemStyle:{color:SERIES_COLOR.purple},yAxisIndex:1});
+  }else if(k==='heart_rate'){ series.push({name:'心率',type:'line',smooth:true,symbol:'none',data:ptsArr('heart_rate'),lineStyle:{width:2,color:SERIES_COLOR.red},itemStyle:{color:SERIES_COLOR.red},areaStyle:{opacity:.08}}); }
+  else if(k==='spo2'){ series.push({name:'血氧',type:'line',smooth:true,symbol:'none',data:ptsArr('spo2'),lineStyle:{width:2,color:SERIES_COLOR.cyan},itemStyle:{color:SERIES_COLOR.cyan},areaStyle:{opacity:.08}}); }
+  else { series.push({name:'压力',type:'line',smooth:true,symbol:'none',data:ptsArr('stress'),lineStyle:{width:2,color:SERIES_COLOR.purple},itemStyle:{color:SERIES_COLOR.purple},areaStyle:{opacity:.08}}); }
+  detailChart=mkChart($('detailChart'),{color:[SERIES_COLOR.red,SERIES_COLOR.cyan,SERIES_COLOR.purple],
+    tooltip:{...tooltip(),trigger:'axis',valueFormatter:v=>v+'  '},
+    grid:{left:8,right:16,top:34,bottom:8,containLabel:true},
+    legend:{top:0,right:0,textStyle:{color:'#8E8E93',fontSize:12},icon:'circle'},
+    xAxis:{type:'time',axisLine:{lineStyle:{color:'#E5E5EA'}},axisTick:{show:false},
+      axisLabel:{color:'#8E8E93',fontSize:11,hideOverlap:true,
+        formatter:(v)=>{const d=new Date(v);const p=n=>String(n).padStart(2,'0');
+          return p(d.getMonth()+1)+'-'+p(d.getDate())+' '+p(d.getHours())+':'+p(d.getMinutes());}},
+      splitLine:{show:false}},
+    yAxis:[{type:'value',name:'心率(bpm)',nameLocation:'middle',nameGap:34,nameTextStyle:{color:'#8E8E93',fontSize:11},min:40,splitLine:{lineStyle:{color:'#F0F0F2'}},axisLabel:{color:'#8E8E93',fontSize:11}},
+      {type:'value',name:'血氧% / 压力',nameLocation:'middle',nameGap:38,nameTextStyle:{color:'#8E8E93',fontSize:11},splitLine:{show:false},axisLabel:{color:'#8E8E93',fontSize:11}}],
+    series:series});
+}
+
+/* ===== 导出 ===== */
+$('expDays').addEventListener('click', e=>{ const b=e.target.closest('button'); if(!b)return;
+  document.querySelectorAll('#expDays button').forEach(x=>x.classList.remove('on')); b.classList.add('on'); });
+$('expMetrics').addEventListener('click', e=>{ const c=e.target.closest('.chip'); if(!c)return;
+  c.classList.toggle('on'); });
+$('expFmt').addEventListener('click', e=>{ const b=e.target.closest('button'); if(!b)return;
+  document.querySelectorAll('#expFmt button').forEach(x=>x.classList.remove('on')); b.classList.add('on'); });
+$('btnExport').addEventListener('click', async ()=>{
+  const days=document.querySelector('#expDays button.on').dataset.d;
+  const metrics=[...document.querySelectorAll('#expMetrics .chip.on')].map(c=>c.dataset.m).join(',');
+  const fmt=document.querySelector('#expFmt button.on').dataset.f;
+  if(!metrics){ $('exportHint').textContent='请至少勾选一种数据内容'; return; }
+  $('exportHint').textContent='正在生成文件…';
+  try{
+    const d=await api('/api/export?days='+days+'&metrics='+encodeURIComponent(metrics)+'&format='+fmt+'&save=1');
+    if(d && d.saved){ $('exportHint').textContent='已导出到：'+d.path; }
+  }catch(e){ $('exportHint').textContent='导出失败：'+(e.message||'未知错误'); }
+});
+
+/* ===== 初始化 ===== */
+(async function init(){
+  try{
+    const st=await api('/api/status');
+    if(st.logged_in){ await enterApp(); }
+    if(st.version){ $('footNote').textContent = (st.app||'小米手环健康客户端')+' v'+st.version+' · 本地服务 · 数据不经过第三方'; }
+  }catch(e){}
+})();
+window.addEventListener('resize', ()=>{ [trendChart,sleepChart,detailChart].forEach(c=>{ if(c) c.resize(); }); });
+</script>
+</body>
+</html>
