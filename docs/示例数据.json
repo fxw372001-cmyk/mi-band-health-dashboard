@@ -1,0 +1,70 @@
+{
+  "_说明": "脱敏示例数据，仅演示字段结构，不代表任何真实用户数据",
+  "user_id": "10000xxxxx",
+  "device": {
+    "name": "小米手环11 NFC版",
+    "model": "miwear.watch.q66nfc",
+    "mac": "xx:xx:xx:xx:xx:xx",
+    "fw": "4.100.139",
+    "sid": "xxxx"
+  },
+  "date_range": ["2026-09-16 00:00", "2026-09-17 23:59"],
+  "days": 2,
+  "data": {
+    "steps": [
+      {"time": 1758067200, "value": "{\"calories\":285,\"distance\":4197,\"steps\":7115}", "watermark": 0, "update_time": 1758153600}
+    ],
+    "calories": [
+      {"time": 1758067200, "value": "{\"calories\":339}", "watermark": 0, "update_time": 1758153600}
+    ],
+    "valid_stand": [
+      {"time": 1758067200, "value": "{\"count\":14}", "watermark": 0, "update_time": 1758153600}
+    ],
+    "sleep": [
+      {
+        "time": 1758067200,
+        "value": "{\"total_duration\":462,\"sleep_deep_duration\":96,\"sleep_light_duration\":320,\"sleep_awake_duration\":46,\"sleep_score\":82,\"long_sleep_evaluation\":\"优秀\",\"segment_details\":[{\"bedtime\":1758078900,\"wake_up_time\":1758114000,\"duration\":462,\"timezone\":32,\"deep_duration\":96,\"light_duration\":320,\"awake_duration\":46}]}",
+        "watermark": 0,
+        "update_time": 1758153600
+      }
+    ],
+    "heart_rate": [
+      {
+        "time": 1758067200,
+        "value": "{\"avg_hr\":72,\"avg_rhr\":58,\"latest_hr\":{\"bpm\":66,\"time\":1758153000},\"fat_burning_hr_zone_duration\":45,\"aerobic_hr_zone_duration\":12,\"abnormal_hr_count\":0}",
+        "watermark": 0,
+        "update_time": 1758153600
+      }
+    ],
+    "spo2": [
+      {
+        "time": 1758067200,
+        "value": "{\"avg_spo2\":97,\"max_spo2\":99,\"min_spo2\":94,\"lack_spo2_count\":0,\"latest_spo2\":{\"spo2\":97,\"time\":1758153000}}",
+        "watermark": 0,
+        "update_time": 1758153600
+      }
+    ],
+    "intensity": [
+      {"time": 1758067200, "value": "{\"minutes\":35}", "watermark": 0, "update_time": 1758153600}
+    ],
+    "heart_rate_points": [
+      {"time": 1758153000, "value": "{\"time\":1758153000,\"bpm\":66}", "zone_offset": 28800, "zone_name": "Asia/Shanghai"},
+      {"time": 1758153600, "value": "{\"time\":1758153600,\"bpm\":68}", "zone_offset": 28800, "zone_name": "Asia/Shanghai"}
+    ],
+    "spo2_points": [
+      {"time": 1758153000, "value": "{\"time\":1758153000,\"spo2\":97}", "zone_offset": 28800, "zone_name": "Asia/Shanghai"}
+    ],
+    "stress_points": [
+      {"time": 1758153000, "value": "{\"time\":1758153000,\"stress\":38}", "zone_offset": 28800, "zone_name": "Asia/Shanghai"}
+    ],
+    "workouts": [
+      {
+        "key": "outdoor_riding",
+        "time": 1758096000,
+        "value": "{\"calories\":337,\"distance\":10192,\"duration\":3050,\"avg_hrm\":123,\"end_time\":1758099050}",
+        "watermark": 0,
+        "update_time": 1758153600
+      }
+    ]
+  }
+}
