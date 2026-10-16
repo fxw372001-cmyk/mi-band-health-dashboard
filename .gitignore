@@ -1,0 +1,20 @@
+# 敏感文件：绝不提交
+session.json
+device_id.json
+auth_key.json
+source_list.json
+
+# 运行时数据
+数据/
+客户端构建/
+
+# Python 缓存与构建产物
+vendor/
+build/
+dist/
+*.spec
+__pycache__/
+*.pyc
+
+# 日志
+*.log
